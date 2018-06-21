@@ -17,6 +17,22 @@ export default class Login extends Component {
     };
   }
 
+  componentDidMount() {
+    const gapiScript = document.createElement("script");
+    gapiScript.src = "https://apis.google.com/js/api.js?onload=onGapiLoad";
+    gapiScript.async = true;
+    window.onGapiLoad = function onGapiLoad() {
+      window.gapi.load("auth2", { callback: onAuthApiLoad });
+      function onAuthApiLoad() {
+        window.gapi.auth2.init({
+          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+          scope: "profile email openid"
+        });
+      }
+    };
+    document.body.appendChild(gapiScript);
+  }
+
   validateForm() {
     return this.state.email.length > 0 && this.state.password.length > 0;
   }
@@ -24,6 +40,18 @@ export default class Login extends Component {
   handleChange = event => {
     this.setState({
       [event.target.id]: event.target.value
+    });
+  };
+
+  handleGoogleSignIn = () => {
+    const ga = window.gapi.auth2.getAuthInstance();
+    ga.signIn().then(googleUser => {
+      const { id_token, expires_at } = googleUser.getAuthResponse();
+      const profile = googleUser.getBasicProfile();
+      const user = {
+        email: profile.getEmail(),
+        name: profile.getName()
+      };
     });
   };
 
@@ -71,6 +99,13 @@ export default class Login extends Component {
             text="Login"
             loadingText="Logging in…"
           />
+          <button
+            onClick={() => {
+              this.handleGoogleSignIn();
+            }}
+          >
+            Google Sign In
+          </button>
         </form>
       </div>
     );
