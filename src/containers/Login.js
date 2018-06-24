@@ -1,8 +1,10 @@
 import React, { Component } from "react";
-import { FormGroup, FormControl, ControlLabel } from "react-bootstrap";
+import { FormGroup, FormControl, ControlLabel, Button } from "react-bootstrap";
 import LoaderButton from "../components/LoaderButton";
 
 import { Auth } from "aws-amplify";
+
+import GoogleLogin from "react-google-login";
 
 import "./Login.css";
 
@@ -25,6 +27,29 @@ export default class Login extends Component {
     this.setState({
       [event.target.id]: event.target.value
     });
+  };
+
+  handleGoogleSignIn = async response => {
+    try {
+      const { id_token, expires_at } = response.getAuthResponse();
+      const profile = response.getBasicProfile();
+      const user = {
+        email: profile.getEmail(),
+        name: profile.getName()
+      };
+
+      await Auth.federatedSignIn(
+        "google",
+        {
+          token: id_token,
+          expires_at
+        },
+        user
+      );
+      this.props.userHasAuthenticated(true);
+    } catch (e) {
+      alert(e.message);
+    }
   };
 
   handleSubmit = async event => {
@@ -70,6 +95,17 @@ export default class Login extends Component {
             isLoading={this.state.isLoading}
             text="Login"
             loadingText="Logging in…"
+          />
+          <br />
+          <GoogleLogin
+            clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
+            buttonText="Login using Google"
+            onSuccess={this.handleGoogleSignIn}
+            render={renderProps => (
+              <Button {...renderProps} bsSize="large">
+                Login with Google
+              </Button>
+            )}
           />
         </form>
       </div>
