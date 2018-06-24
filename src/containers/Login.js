@@ -5,7 +5,12 @@ import LoaderButton from "../components/LoaderButton";
 import { Auth } from "aws-amplify";
 
 import GoogleLogin from "react-google-login";
+import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
+
 import googleIcon from "../assets/google.svg";
+import facebookIcon from "../assets/facebook.svg";
+
+import config from "./../config";
 
 import "./Login.css";
 
@@ -53,6 +58,33 @@ export default class Login extends Component {
     }
   };
 
+  handleFacebookSignIn = async response => {
+    try {
+      const { accessToken, expiresIn } = response;
+      const date = new Date();
+      const expires_at = expiresIn * 1000 + date.getTime();
+      if (!accessToken) {
+        return;
+      }
+      const fb = window.FB;
+      fb.api("/me", response => {
+        const user = {
+          name: response.name
+        };
+
+        Auth.federatedSignIn(
+          "facebook",
+          { token: accessToken, expires_at },
+          user
+        ).then(credentials => {
+          this.props.userHasAuthenticated(true);
+        });
+      });
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
   handleSubmit = async event => {
     event.preventDefault();
 
@@ -89,13 +121,28 @@ export default class Login extends Component {
             />
           </FormGroup>
           <GoogleLogin
-            clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
+            clientId={config.GOOGLE_CLIENT_ID}
             buttonText="Login using Google"
             onSuccess={this.handleGoogleSignIn}
             render={renderProps => (
-              <div className="googleLogin">
-                <img src={googleIcon} {...renderProps} />
-              </div>
+              <img
+                className="googleLogin"
+                src={googleIcon}
+                alt="google login"
+                onClick={renderProps.onClick}
+              />
+            )}
+          />
+          <FacebookLogin
+            appId={config.FACEBOOK_APP_ID}
+            callback={this.handleFacebookSignIn}
+            render={renderProps => (
+              <img
+                className="facebookLogin"
+                src={facebookIcon}
+                alt="facebook login"
+                onClick={renderProps.onClick}
+              />
             )}
           />
           <LoaderButton
