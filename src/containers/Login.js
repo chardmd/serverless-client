@@ -1,8 +1,10 @@
 import React, { Component } from "react";
-import { FormGroup, FormControl, ControlLabel } from "react-bootstrap";
+import { FormGroup, FormControl, ControlLabel, Button } from "react-bootstrap";
 import LoaderButton from "../components/LoaderButton";
 
 import { Auth } from "aws-amplify";
+
+import GoogleLogin from "react-google-login";
 
 import "./Login.css";
 
@@ -17,22 +19,6 @@ export default class Login extends Component {
     };
   }
 
-  componentDidMount() {
-    const gapiScript = document.createElement("script");
-    gapiScript.src = "https://apis.google.com/js/api.js?onload=onGapiLoad";
-    gapiScript.async = true;
-    window.onGapiLoad = function onGapiLoad() {
-      window.gapi.load("auth2", { callback: onAuthApiLoad });
-      function onAuthApiLoad() {
-        window.gapi.auth2.init({
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-          scope: "profile email openid"
-        });
-      }
-    };
-    document.body.appendChild(gapiScript);
-  }
-
   validateForm() {
     return this.state.email.length > 0 && this.state.password.length > 0;
   }
@@ -43,16 +29,27 @@ export default class Login extends Component {
     });
   };
 
-  handleGoogleSignIn = () => {
-    const ga = window.gapi.auth2.getAuthInstance();
-    ga.signIn().then(googleUser => {
-      const { id_token, expires_at } = googleUser.getAuthResponse();
-      const profile = googleUser.getBasicProfile();
+  handleGoogleSignIn = async response => {
+    try {
+      const { id_token, expires_at } = response.getAuthResponse();
+      const profile = response.getBasicProfile();
       const user = {
         email: profile.getEmail(),
         name: profile.getName()
       };
-    });
+
+      await Auth.federatedSignIn(
+        "google",
+        {
+          token: id_token,
+          expires_at
+        },
+        user
+      );
+      this.props.userHasAuthenticated(true);
+    } catch (e) {
+      alert(e.message);
+    }
   };
 
   handleSubmit = async event => {
@@ -99,13 +96,17 @@ export default class Login extends Component {
             text="Login"
             loadingText="Logging in…"
           />
-          <button
-            onClick={() => {
-              this.handleGoogleSignIn();
-            }}
-          >
-            Google Sign In
-          </button>
+          <br />
+          <GoogleLogin
+            clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
+            buttonText="Login using Google"
+            onSuccess={this.handleGoogleSignIn}
+            render={renderProps => (
+              <Button {...renderProps} bsSize="large">
+                Login with Google
+              </Button>
+            )}
+          />
         </form>
       </div>
     );

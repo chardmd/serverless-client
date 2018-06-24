@@ -18,13 +18,11 @@ class App extends Component {
 
   async componentDidMount() {
     try {
-      if (await Auth.currentSession()) {
+      if (await Auth.currentAuthenticatedUser()) {
         this.userHasAuthenticated(true);
       }
     } catch (e) {
-      if (e !== "No current user") {
-        alert(e);
-      }
+      console.log(e);
     }
 
     this.setState({ isAuthenticating: false });
