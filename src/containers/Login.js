@@ -1,10 +1,11 @@
 import React, { Component } from "react";
-import { FormGroup, FormControl, ControlLabel, Button } from "react-bootstrap";
+import { FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 import LoaderButton from "../components/LoaderButton";
 
 import { Auth } from "aws-amplify";
 
 import GoogleLogin from "react-google-login";
+import googleIcon from "../assets/google.svg";
 
 import "./Login.css";
 
@@ -87,6 +88,16 @@ export default class Login extends Component {
               type="password"
             />
           </FormGroup>
+          <GoogleLogin
+            clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
+            buttonText="Login using Google"
+            onSuccess={this.handleGoogleSignIn}
+            render={renderProps => (
+              <div className="googleLogin">
+                <img src={googleIcon} {...renderProps} />
+              </div>
+            )}
+          />
           <LoaderButton
             block
             bsSize="large"
@@ -95,17 +106,6 @@ export default class Login extends Component {
             isLoading={this.state.isLoading}
             text="Login"
             loadingText="Logging in…"
-          />
-          <br />
-          <GoogleLogin
-            clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
-            buttonText="Login using Google"
-            onSuccess={this.handleGoogleSignIn}
-            render={renderProps => (
-              <Button {...renderProps} bsSize="large">
-                Login with Google
-              </Button>
-            )}
           />
         </form>
       </div>
