@@ -44,6 +44,8 @@ export default class Login extends Component {
         name: profile.getName()
       };
 
+      this.setState({ isLoading: true });
+
       await Auth.federatedSignIn(
         "google",
         {
@@ -66,6 +68,8 @@ export default class Login extends Component {
       if (!accessToken) {
         return;
       }
+      this.setState({ isLoading: true });
+
       const fb = window.FB;
       fb.api("/me", response => {
         const user = {
